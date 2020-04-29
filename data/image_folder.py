@@ -76,7 +76,7 @@ class ImageFolder(data.Dataset):
         self.imgs = imgs
 
         if no_permutation:
-           self.imgs= sorted(self.imgs)
+            self.imgs= sorted(self.imgs)
         self.transform = transform
         self.return_paths = return_paths
         self.loader = loader
@@ -92,9 +92,9 @@ class ImageFolder(data.Dataset):
         path = self.imgs[index]
         img = self.loader(path)
         if self.transform is not None:
-			img = self.transform(img)
-			if (self.font_trans):
-				img = font_transform(img,path, self.rgb)
+            img = self.transform(img)
+            if (self.font_trans):
+                img = font_transform(img,path, self.rgb)
         if self.return_paths:
             return img, path
         else:
