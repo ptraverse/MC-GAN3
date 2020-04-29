@@ -50,7 +50,7 @@ class Visualizer():
 
 
     # |visuals|: dictionary of images to display or save
-    def display_current_results(self, visuals, epoch): 
+    def display_current_results(self, visuals, epoch):
         if self.display_id > 0: # show images in the browser
             idx = 1
             for label, image_numpy in visuals.items():
@@ -106,7 +106,7 @@ class Visualizer():
     # save image to the disk
     def save_images(self, webpage, visuals, image_path):
         image_dir = webpage.get_image_dir()
-        print "save to:", image_dir
+        print("save to:" +  str(image_dir))
         short_path = ntpath.basename(image_path[0])
         name = os.path.splitext(short_path)[0]
 
@@ -125,7 +125,7 @@ class Visualizer():
             links.append(image_name)
         webpage.add_images(ims, txts, links, width=self.win_size)
         self.video_dir.extend([image_dir])
-        
+
     def copy_images(self, image_paths, image_path, dest_path_A, dest_path_B, target_path, observed):
         name = os.path.splitext(image_path)[0]
 
@@ -134,19 +134,19 @@ class Visualizer():
         n_ch = im_.shape[1]/im_.shape[0]
         target_size = im_.shape[0]
         for obs in observed:
-            im_[:,target_size*obs:(obs+1)*target_size,:] = 255 
+            im_[:,target_size*obs:(obs+1)*target_size,:] = 255
         for obs in observed:
         	image_name = '%s_%s.png' % (name, obs)
         	im_path = os.path.join(dest_path_A, image_name)
         	misc.imsave(im_path, im_)
-            
+
         target_ims = os.listdir(target_path)
         for im in target_ims:
             obs = im.split('.png')[0].split('_')[-1]
             image_name = '%s_%s.png' % (name, obs)
             shutil.copyfile(os.path.join(target_path,im), os.path.join(dest_path_B,image_name))
 
-        
+
     def save_video(self,video_path):
         outputdata = []
         os.system("mkdir ~/tmp_ffmpeg")
@@ -165,10 +165,9 @@ class Visualizer():
                             img = misc.imread(img_dir+'/'+im)
                             im_size = img.shape[0]
                             epoch = im.split('_')[0]
-                            print epoch, i
+                            print("epoch:" +str(epoch) + " , i:" + str(i))
                             # shutil.copyfile(os.path.join(img_dir,im),"~/tmp_ffmpeg/im%04d.png"%i)
                             os.system("cp %s ~/tmp_ffmpeg/%s/im%04d.png 2>&1|tee ~/tmp_ffmpeg/log.txt"%(os.path.join(img_dir.replace("&","\&"),im),end_,i))
                             i+=1
         os.system("ffmpeg -r 6 -f image2 -s %dx%d -i ~/tmp_ffmpeg/fake_B/im%%04d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p %s/test_fake_B.mp4 2>&1|tee ~/tmp_ffmpeg/log2_fake_B.txt"%(img.shape[0],img.shape[1],video_path.replace("&","\&")))
         os.system("ffmpeg -r 6 -f image2 -s %dx%d -i ~/tmp_ffmpeg/real_A/im%%04d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p %s/test_real_A.mp4 2>&1|tee ~/tmp_ffmpeg/log2_real_A.txt"%(img.shape[0],img.shape[1],video_path.replace("&","\&")))
-

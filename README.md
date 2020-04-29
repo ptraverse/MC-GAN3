@@ -2,15 +2,16 @@
 
 <img src="https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/ft51_1_fake_B.gif" width="90%"/>
 
-This is the implementation of the [Multi-Content GAN for Few-Shot Font Style Transfer](https://arxiv.org/abs/1712.00516). The code was written by [Samaneh Azadi](https://github.com/azadis).
+This is a python3 update of the implementation of the [Multi-Content GAN for Few-Shot Font Style Transfer](https://arxiv.org/abs/1712.00516). The code was written by [Samaneh Azadi](https://github.com/azadis).
 If you use this code or our [collected font dataset](https://github.com/azadis/AdobeFontDropper#mc-gan-traintest) for your research, please cite:
 
 Multi-Content GAN for Few-Shot Font Style Transfer; [Samaneh Azadi](https://people.eecs.berkeley.edu/~sazadi/), [Matthew Fisher](https://research.adobe.com/person/matt-fisher/), [Vladimir Kim](http://vovakim.com/), [Zhaowen Wang](https://research.adobe.com/person/zhaowen-wang/), [Eli Shechtman](https://research.adobe.com/person/eli-shechtman/), [Trevor Darrell](https://people.eecs.berkeley.edu/~trevor/), in arXiv, 2017.
 
 ## Prerequisites:
 - Linux or macOS
-- Python 2.7
+- ~~Python 2.7~~ *Python3*
 - CPU or NVIDIA GPU + CUDA CuDNN
+
 
 ## Getting Started
 ### Installation
@@ -81,7 +82,7 @@ Given a few letters of font ```${DATA}``` for examples 5 letters {T,O,W,E,R}, tr
 ./scripts/train_cGAN.sh Capitals64
 ```
 
-Model parameters will be saved under ```./checkpoints/GlyphNet_pretrain```. 
+Model parameters will be saved under ```./checkpoints/GlyphNet_pretrain```.
 
 - Test Glyph Network after specific numbers of epochs (e.g. 400 by setting ```EPOCH=400``` in ```./scripts/test_cGAN.sh```):
 ```bash
@@ -139,9 +140,9 @@ Follow the previous steps to visualize generated images and training curves wher
 
 ### Training/test Details
 
-- Flags: see ```options/train_options.py```, ```options/base_options.py``` and ```options/test_options.py``` for explanations on each flag. 
+- Flags: see ```options/train_options.py```, ```options/base_options.py``` and ```options/test_options.py``` for explanations on each flag.
 
-- Baselines: if you want to use this code to get results of Image Translation baseline or want to try tiling glyphs rather than stacking, refer to the end of ```scripts/train_cGAN.sh``` . If you only want to train OrnaNet on top of clean glyphs, refer to the end of ```scripts/train_StackGAN.sh```. 
+- Baselines: if you want to use this code to get results of Image Translation baseline or want to try tiling glyphs rather than stacking, refer to the end of ```scripts/train_cGAN.sh``` . If you only want to train OrnaNet on top of clean glyphs, refer to the end of ```scripts/train_StackGAN.sh```.
 
 - Image Dimension: We have tried this network only on ```64x64``` images of letters. We do not scale and crop images since we set both ```opt.FineSize``` and ```opt.LoadSize``` to ```64```.
 
@@ -163,9 +164,3 @@ If you use this code or the provided dataset for your research, please cite our 
 We thank [Elena Sizikova](http://www.cs.princeton.edu/~sizikova/) for downloading all fonts used in the 10K font data set.
 
 Code is inspired by [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
-
-
-
-
-
-

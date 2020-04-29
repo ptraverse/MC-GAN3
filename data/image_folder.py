@@ -47,19 +47,19 @@ def font_transform(img,path, rgb_in):
     D_ = img.size()[2]/target_size
     # warnings.warn("size, %s %s"%(img.size(),D_))
     if not rgb_in:
-        img = torch.mean(img,dim=0) #only one of the RGB channels    
+        img = torch.mean(img,dim=0) #only one of the RGB channels
         img = img[None,:,:] #(1,64,64)
         n_rgb =1
     else:
         img = img.permute(1,0,2).contiguous().view(1,target_size, n_rgb*img.size()[2])
-        
+
     slices = []
     for j in range(target_size):
         for i in np.arange(0,D_):
             slices += list(target_size * np.arange(i,D_*n_rgb,D_) + j)
     img = index_select(img,2,LongTensor(slices)).view(target_size,target_size,D_*n_rgb)
     img = img.permute(2,0,1)
-    return img           
+    return img
 
 
 class ImageFolder(data.Dataset):
@@ -74,7 +74,7 @@ class ImageFolder(data.Dataset):
 
         self.root = root
         self.imgs = imgs
-        
+
         if no_permutation:
            self.imgs= sorted(self.imgs)
         self.transform = transform
@@ -87,7 +87,7 @@ class ImageFolder(data.Dataset):
         self.loadSize=loadSize
 
 
-   
+
     def __getitem__(self, index):
         path = self.imgs[index]
         img = self.loader(path)

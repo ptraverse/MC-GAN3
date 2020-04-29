@@ -7,8 +7,12 @@ import dominate
 from dominate.tags import *
 import os
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+
+from sys import version_info
+if version_info[0] < 3:
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+
 
 
 class HTML:

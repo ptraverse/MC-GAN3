@@ -15,14 +15,14 @@ from torch import index_select, LongTensor
 
 def weights_init(m):
     classname = m.__class__.__name__
-    print "classname",classname
+    print("classname" + str(classname))
     if classname.find('Conv') != -1:
-        print "in random conv"
+        print("in random conv")
         m.weight.data.normal_(0.0, 0.02)
         if hasattr(m.bias, 'data'):
             m.bias.data.fill_(0)
     elif classname.find('BatchNorm2d') != -1:
-        print "in random batchnorm"
+        print("in random batchnorm")
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
@@ -65,7 +65,7 @@ def convTranspose_norm_relu_module(norm_type, norm_layer, input_nc, ngf, kernel_
 
 
 def define_G_3d(input_nc, output_nc, norm='batch', groups=26, ksize=3,padding=1, gpu_ids=[]):
-    
+
     netG_3d = None
     use_gpu = len(gpu_ids) > 0
 
@@ -83,7 +83,7 @@ def define_G_3d(input_nc, output_nc, norm='batch', groups=26, ksize=3,padding=1,
 
 
 def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[]):
-    
+
     netG = None
     use_gpu = len(gpu_ids) > 0
 
@@ -91,7 +91,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
 
     if use_gpu:
         assert(torch.cuda.is_available())
-    print which_model_netG
+    print(which_model_netG)
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, norm_type=norm, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
@@ -113,7 +113,7 @@ def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropo
 
 
 def define_Enc(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[]):
-    
+
     netG = None
     use_gpu = len(gpu_ids) > 0
 
@@ -121,7 +121,7 @@ def define_Enc(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dro
 
     if use_gpu:
         assert(torch.cuda.is_available())
-    print which_model_netG
+    print(which_model_netG)
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetEncoder(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, norm_type=norm, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
@@ -142,7 +142,7 @@ def define_Enc(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dro
 
 
 def define_Dec(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, gpu_ids=[]):
-    
+
     netG = None
     use_gpu = len(gpu_ids) > 0
 
@@ -150,7 +150,7 @@ def define_Dec(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dro
 
     if use_gpu:
         assert(torch.cuda.is_available())
-    print which_model_netG
+    print(which_model_netG)
     if which_model_netG == 'resnet_9blocks':
         netG = ResnetDecoder(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, norm_type=norm, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
@@ -195,7 +195,7 @@ def define_preNet(input_nc, nif=32 ,which_model_preNet='none', norm='batch', gpu
     norm_layer = get_norm_layer(norm_type=norm)
     use_gpu = len(gpu_ids) > 0
     if which_model_preNet == '2_layers':
-        print "2 layers convolution applied before being fed into the discriminator"
+        print("2 layers convolution applied before being fed into the discriminator")
         preNet = InputTransformation(input_nc, nif, norm_layer, gpu_ids)
         if use_gpu:
             assert(torch.cuda.is_available())
@@ -211,8 +211,8 @@ def print_network(net):
     for param in net.parameters():
         num_params += param.numel()
     print(net)
-    
-    
+
+
     print('Total number of parameters: %d' % num_params)
 
 
@@ -278,7 +278,7 @@ class ResnetGenerator_3d_conv(nn.Module):
         else:
             norm_layer = functools.partial(nn.BatchNorm3d,affine=True)
 
-        
+
 
         model = [nn.Conv3d(input_nc, output_nc, kernel_size=ksize, padding=padding, groups=groups),
                  norm_layer(output_nc),
@@ -307,7 +307,7 @@ class ResnetDecoder(nn.Module):
         self.output_nc = output_nc
         self.ngf = ngf
         self.gpu_ids = gpu_ids
-                 
+
         n_downsampling = 2
         factor_ch = 3
         mult = factor_ch**n_downsampling
@@ -327,8 +327,8 @@ class ResnetDecoder(nn.Module):
 
         self.model = nn.Sequential(*model)
 
-    def forward(self, input):  
-    
+    def forward(self, input):
+
         if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
@@ -353,11 +353,11 @@ class ResnetEncoder(nn.Module):
 
 
         model = conv_norm_relu_module(norm_type, norm_layer, input_nc, ngf, 7, 3)
-                 
+
         n_downsampling = 2
         for i in range(n_downsampling):
             factor_ch = 3 #2**i : 3**i is a more complicated filter
-            mult = factor_ch**i 
+            mult = factor_ch**i
             model += conv_norm_relu_module(norm_type,norm_layer, ngf * mult, ngf * mult * factor_ch, 3,1, stride=2)
 
         mult = factor_ch**n_downsampling
@@ -366,12 +366,12 @@ class ResnetEncoder(nn.Module):
 
         self.model = nn.Sequential(*model)
 
-    def forward(self, input):  
-    
+    def forward(self, input):
+
         if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
-            return self.model(input) 
+            return self.model(input)
 
 # Defines the generator that consists of Resnet blocks between a few
 # downsampling/upsampling operations.
@@ -388,11 +388,11 @@ class ResnetGenerator(nn.Module):
 
 
         model = conv_norm_relu_module(norm_type, norm_layer, input_nc, ngf, 7, 3)
-                 
+
         n_downsampling = 2
         for i in range(n_downsampling):
             factor_ch = 3 #2**i : 3**i is a more complicated filter
-            mult = factor_ch**i 
+            mult = factor_ch**i
             model += conv_norm_relu_module(norm_type,norm_layer, ngf * mult, ngf * mult * factor_ch, 3,1, stride=2)
 
         mult = factor_ch**n_downsampling
@@ -414,8 +414,8 @@ class ResnetGenerator(nn.Module):
 
         self.model = nn.Sequential(*model)
 
-    def forward(self, input, encoder=False):  
-    
+    def forward(self, input, encoder=False):
+
         if self.gpu_ids and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
@@ -443,7 +443,7 @@ class ResnetBlock(nn.Module):
             conv_block += [nn.Dropout(0.5)]
         else:
             conv_block += [nn.Dropout(0.0)]
-        
+
 
         if norm_type=='batch' or norm_type=='instance':
             conv_block += [nn.Conv2d(dim, dim, kernel_size=3, padding=p),
@@ -476,16 +476,16 @@ class InputTransformation(nn.Module):
                     norm_layer(nif),
                     nn.ReLU(True)]
         self.model = nn.Sequential(*sequence)
-        
-            
+
+
 
     def forward(self, input):
         if len(self.gpu_ids)  and isinstance(input.data, torch.cuda.FloatTensor):
             netTrans = nn.parallel.data_parallel(self.model, input, self.gpu_ids)
         else:
-            netTrans = self.model(input)   
-        return netTrans       
-        
+            netTrans = self.model(input)
+        return netTrans
+
 # Defines the PatchGAN discriminator with the specified arguments.
 class NLayerDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False, norm_type='batch', postConv=True, gpu_ids=[]):
@@ -512,7 +512,7 @@ class NLayerDiscriminator(nn.Module):
 
         sequence += conv_norm_relu_module(norm_type, norm_layer, ndf * nf_mult_prev,
                     ndf * nf_mult, kw, padw, stride=1, relu='Lrelu')
-    
+
         if postConv:
             sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
 
@@ -520,8 +520,8 @@ class NLayerDiscriminator(nn.Module):
                 sequence += [nn.Sigmoid()]
 
         self.model = nn.Sequential(*sequence)
-    
-    
+
+
     def forward(self, input):
         if len(self.gpu_ids)  and isinstance(input.data, torch.cuda.FloatTensor):
             return nn.parallel.data_parallel(self.model, input, self.gpu_ids)
