@@ -37,9 +37,9 @@ class cGANModel(BaseModel):
 
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf,
                                     opt.which_model_netG, opt.norm, opt.use_dropout, gpu_ids=self.gpu_ids)
-        
+
         disc_ch = opt.input_nc
-            
+
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
             if self.opt.conditional:
@@ -47,7 +47,7 @@ class cGANModel(BaseModel):
                     self.preNet_A = networks.define_preNet(disc_ch+disc_ch, disc_ch+disc_ch, which_model_preNet=opt.which_model_preNet,norm=opt.norm, gpu_ids=self.gpu_ids)
                 nif = disc_ch+disc_ch
 
-                
+
                 netD_norm = opt.norm
 
                 self.netD = networks.define_D(nif, opt.ndf,
@@ -99,7 +99,7 @@ class cGANModel(BaseModel):
 
     def set_input(self, input):
         input_A = input['A']
-        input_B = input['B']        
+        input_B = input['B']
         self.input_A.resize_(input_A.size()).copy_(input_A)
         self.input_B.resize_(input_B.size()).copy_(input_B)
         self.image_paths = input['A_paths']
@@ -112,27 +112,27 @@ class cGANModel(BaseModel):
         else:
             self.fake_B = self.netG.forward(self.real_A)
 
-        
+
         self.real_B = Variable(self.input_B)
         real_B = util.tensor2im(self.real_B.data)
         real_A = util.tensor2im(self.real_A.data)
-    
+
     def add_noise_disc(self,real):
         #add noise to the discriminator target labels
-        #real: True/False? 
+        #real: True/False?
         if self.opt.noisy_disc:
             rand_lbl = random.random()
             if rand_lbl<0.6:
                 label = (not real)
             else:
                 label = (real)
-        else:  
+        else:
             label = (real)
         return label
-            
-                
 
-    
+
+
+
     # no backprop gradients
     def test(self):
         self.real_A = Variable(self.input_A, volatile=True)
@@ -142,14 +142,14 @@ class cGANModel(BaseModel):
 
         else:
             self.fake_B = self.netG.forward(self.real_A)
-            
+
         self.real_B = Variable(self.input_B, volatile=True)
 
     #get image paths
     def get_image_paths(self):
         return self.image_paths
 
-    
+
     def backward_D(self):
         # Fake
         # stop backprop to the generator by detaching fake_B
@@ -173,7 +173,7 @@ class cGANModel(BaseModel):
                 transformed_AB = self.preNet_A.forward(fake_AB.detach())
                 self.pred_fake = self.netD.forward(transformed_AB)
                 self.loss_D_fake += self.criterionGAN(self.pred_fake, label_fake)
-                            
+
         else:
             self.pred_fake = self.netD.forward(self.fake_B.detach())
             self.loss_D_fake = self.criterionGAN(self.pred_fake, label_fake)
@@ -190,11 +190,11 @@ class cGANModel(BaseModel):
                 transformed_A_real = self.preNet_A.forward(real_AB)
                 self.pred_real = self.netD.forward(transformed_A_real)
                 self.loss_D_real += self.criterionGAN(self.pred_real, label_real)
-                            
+
         else:
-            self.pred_real = self.netD.forward(self.real_B)            
+            self.pred_real = self.netD.forward(self.real_B)
             self.loss_D_real = self.criterionGAN(self.pred_real, label_real)
-        
+
         # Combined loss
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
 
@@ -213,7 +213,7 @@ class cGANModel(BaseModel):
                 transformed_A = self.preNet_A.forward(fake_AB)
                 pred_fake = self.netD.forward(transformed_A)
                 self.loss_G_GAN += self.criterionGAN(pred_fake, True)
-        
+
         else:
             pred_fake = self.netD.forward(self.fake_B)
             self.loss_G_GAN = self.criterionGAN(pred_fake, True)
@@ -243,15 +243,22 @@ class cGANModel(BaseModel):
         self.optimizer_G.step()
         if self.opt.conv3d:
             self.optimizer_G_3d.step()
-        
-    
+
+
 
     def get_current_errors(self):
-        return OrderedDict([('G_GAN', self.loss_G_GAN.data[0]),
-                ('G_L1', self.loss_G_L1.data[0]),
-                ('D_real', self.loss_D_real.data[0]),
-                ('D_fake', self.loss_D_fake.data[0])
-        ])
+        try:
+            return OrderedDict([('G_GAN', self.loss_G_GAN.data[0]),
+                    ('G_L1', self.loss_G_L1.data[0]),
+                    ('D_real', self.loss_D_real.data[0]),
+                    ('D_fake', self.loss_D_fake.data[0])
+            ])
+        except IndexError as e:
+            return OrderedDict([('G_GAN', self.loss_G_GAN.item()),
+                    ('G_L1', self.loss_G_L1.item()),
+                    ('D_real', self.loss_D_real.item()),
+                    ('D_fake', self.loss_D_fake.item())
+            ])
 
 
     def get_current_visuals(self):
@@ -267,7 +274,7 @@ class cGANModel(BaseModel):
         self.save_network(self.netD, 'D', label, gpu_ids=self.gpu_ids)
         if self.opt.which_model_preNet != 'none':
             self.save_network(self.preNet_A, 'PRE_A', label, gpu_ids=self.gpu_ids)
-            
+
 
     def update_learning_rate(self):
         lrd = self.opt.lr / self.opt.niter_decay
