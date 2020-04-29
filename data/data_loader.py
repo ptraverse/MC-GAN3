@@ -22,6 +22,7 @@ from torch.nn import UpsamplingBilinear2d
 from torch.autograd import Variable
 import warnings
 import pickle
+import pdb
 
 
 def normalize_stack(input,val=0.5):
@@ -66,8 +67,8 @@ class FlatData(object):
             self.dict = True
 
 
-        
-        
+
+
     def __iter__(self):
         self.data_loader_iter = iter(self.data_loader)
         self.iter = 0
@@ -83,14 +84,14 @@ class FlatData(object):
         h = AB.size(2)
         w_offset = random.randint(0, max(0, w - self.fineSize - 1))
         h_offset = random.randint(0, max(0, h - self.fineSize - 1))
-        A =  torch.mean(AB,dim=1) #only one of the RGB channels    
+        A =  torch.mean(AB,dim=1) #only one of the RGB channels
         A = A[:,None,:,:] #(m,1,64,64*26)
-        B =  torch.mean(AB,dim=1) #only one of the RGB channels    
+        B =  torch.mean(AB,dim=1) #only one of the RGB channels
         B = B[:,None,:,:] #(m,1,64,64*26)
         n_rgb = 3 if self.rgb else 1
         target_size = A.size(2)
-        AA = A.clone() 
-        if self.blanks != 0:       
+        AA = A.clone()
+        if self.blanks != 0:
             #randomly remove some of the glyphs
 
             if not self.dict:
@@ -105,7 +106,7 @@ class FlatData(object):
             #     transforms.ToPILImage()])
 
             # AA_ = t_topil(AA[0,0,:,:].unsqueeze_(0))
-            # misc.imsave('./AA_0.png',AA_)            
+            # misc.imsave('./AA_0.png',AA_)
 
         return {'A': AA, 'A_paths': AB_paths, 'B':B, 'B_paths':AB_paths}
 
@@ -124,7 +125,7 @@ class Data(object):
         if len(self.random_dict.keys()):
             self.dict = True
 
-        
+
     def __iter__(self):
         self.data_loader_iter = iter(self.data_loader)
         self.iter = 0
@@ -145,13 +146,15 @@ class Data(object):
         B = AB[:, :, h_offset:h_offset + self.fineSize,
                w_offset: w_offset + self.fineSize]
         n_rgb = 3 if self.rgb else 1
-        
-        
+
+
         if self.blanks == 0:
             AA = A.clone()
-        else: 
+        else:
             #randomly remove some of the glyphs in input
             if not self.dict:
+                print(A)
+                pdb.set_trace();
                 blank_ind = np.repeat(np.random.permutation(A.size(1)/n_rgb)[0:int(self.blanks*A.size(1)/n_rgb)],n_rgb)
             else:
                 file_name = map(lambda x:x.split("/")[-1],AB_paths)
@@ -164,7 +167,7 @@ class Data(object):
             blank_ind = blank_ind*n_rgb + rgb_inds
             AA = A.clone()
             AA.index_fill_(1,LongTensor(list(blank_ind)),1)
-            
+
         return {'A': AA, 'A_paths': AB_paths, 'B':B, 'B_paths':AB_paths}
 
 class PartialData(object):
@@ -178,24 +181,24 @@ class PartialData(object):
         self.blanks = blanks
 
         self.base_font = base_font
-        if base_font:        
+        if base_font:
             self.data_loader_base_iter = iter(self.data_loader_base)
             self.A_base,self.A_base_paths = next(self.data_loader_base_iter)
-            self.A_base[0,:,:,:]=normalize_stack(self.A_base[0,:,:,:]) 
-        else: 
+            self.A_base[0,:,:,:]=normalize_stack(self.A_base[0,:,:,:])
+        else:
             self.A_base = []
         self.phase =phase
         if self.phase=='train':
 
-            t_tensor =  transforms.Compose([ 
+            t_tensor =  transforms.Compose([
                 transforms.ToTensor(),])
             t_topil = transforms.Compose([
-                transforms.ToPILImage()])             
-                
+                transforms.ToPILImage()])
+
             if self.base_font:
                 for ind in range(self.A_base.size(1)):
                     A_base = t_topil(self.A_base[0,ind,:,:].unsqueeze(0))
-    
+
 
     def __iter__(self):
         self.data_loader_iter_A = iter(self.data_loader_A)
@@ -210,7 +213,7 @@ class PartialData(object):
 
         A, A_paths = next(self.data_loader_iter_A)
         B, B_paths = next(self.data_loader_iter_B)
-        
+
 
         t_topil = transforms.Compose([
             transforms.ToPILImage()])
@@ -222,29 +225,29 @@ class PartialData(object):
         t_normal = transforms.Compose([
             transforms.Normalize((0.5, 0.5, 0.5),
                                  (0.5, 0.5, 0.5))])
-         
-        t_tensor =  transforms.Compose([ 
-            transforms.ToTensor(),])                     
-        
-        
+
+        t_tensor =  transforms.Compose([
+            transforms.ToTensor(),])
+
+
         for index in range(A.size(0)):
             A[index,:,:,:]=normalize_stack(A[index,:,:,:])
             B[index,:,:,:]=normalize_stack(B[index,:,:,:])
             BB=t_topil(B[index,:,:,:])
-                         
 
 
-            # remove more of the glyphs to make prediction harder  
-            if self.blanks!=0: 
+
+            # remove more of the glyphs to make prediction harder
+            if self.blanks!=0:
                 gt_glyph = [int(A_paths[index].split('/')[-1].split('.png')[0].split('_')[-1])]
                 observed_glyph = list(set(np.nonzero(1-A[index,:,:,:])[:,0]) - set(gt_glyph))
                 observed_glyph = np.random.permutation(observed_glyph)
                 blank_nums = 1
                 for i in range(blank_nums):
                     A[index,observed_glyph[i],:,:] = 1
-                    
+
         return {'A': A, 'A_paths': A_paths, 'B':B, 'B_paths':B_paths, 'A_base':self.A_base}
-                      
+
 
 
 class StackDataLoader(BaseDataLoader):
@@ -268,7 +271,7 @@ class StackDataLoader(BaseDataLoader):
                             font_trans=True, no_permutation=opt.no_permutation)
         len_A = len(dataset_A.imgs)
         shuffle_inds = np.random.permutation(len_A)
-        
+
         dataset_B = ImageFolder(root=opt.dataroot  + 'B/'+ opt.phase,
                               transform=transform, return_paths=True, rgb=opt.rgb_out,
                               fineSize=opt.fineSize, loadSize=opt.loadSize,
@@ -283,7 +286,7 @@ class StackDataLoader(BaseDataLoader):
             dataset_B.imgs = [dataset_B.imgs[i] for i in shuffle_inds]
             dataset_A.img_crop = [dataset_A.img_crop[i] for i in shuffle_inds]
             dataset_B.img_crop = [dataset_B.img_crop[i] for i in shuffle_inds]
-            shuffle = False 
+            shuffle = False
         else:
             shuffle = not self.opt.serial_batches
         data_loader_A = torch.utils.data.DataLoader(
@@ -300,11 +303,11 @@ class StackDataLoader(BaseDataLoader):
             num_workers=int(self.opt.nThreads))
 
         if opt.base_font:
-            
-            #Read and apply transformation on the BASE font 
+
+            #Read and apply transformation on the BASE font
             dataset_base = ImageFolder(root=opt.base_root,
                                   transform=transform, return_paths=True, font_trans=True, rgb=opt.rgb,
-                                   fineSize=opt.fineSize, loadSize=opt.loadSize) 
+                                   fineSize=opt.fineSize, loadSize=opt.loadSize)
             data_loader_base = torch.utils.data.DataLoader(
                 dataset_base,
                 batch_size=1,
@@ -348,7 +351,7 @@ class PartialDataLoader(BaseDataLoader):
                                  ])
         dic_phase = {'train':'Train', 'test':'Test'}
         # Dataset A
-        
+
         dataset_A = ImageFolder(root=opt.dataroot +'A/'+ opt.phase,
                               transform=transform, return_paths=True, rgb=opt.rgb, fineSize=opt.fineSize,
                               loadSize=opt.loadSize, font_trans=False, no_permutation=opt.no_permutation)
@@ -357,7 +360,7 @@ class PartialDataLoader(BaseDataLoader):
             shuffle_inds = np.random.permutation(len_A)
         else:
             shuffle_inds = range(len_A)
-        
+
         dataset_B = ImageFolder(root=opt.dataroot  + 'B/'+ opt.phase,
                               transform=transform, return_paths=True, rgb=opt.rgb, fineSize=opt.fineSize,
                               loadSize=opt.loadSize, font_trans=False, no_permutation=opt.no_permutation)
@@ -370,7 +373,7 @@ class PartialDataLoader(BaseDataLoader):
             dataset_B.imgs = [dataset_B.imgs[i] for i in shuffle_inds]
             dataset_A.img_crop = [dataset_A.img_crop[i] for i in shuffle_inds]
             dataset_B.img_crop = [dataset_B.img_crop[i] for i in shuffle_inds]
-            shuffle = False 
+            shuffle = False
         else:
             shuffle = not self.opt.serial_batches
         data_loader_A = torch.utils.data.DataLoader(
@@ -385,12 +388,12 @@ class PartialDataLoader(BaseDataLoader):
             batch_size=self.opt.batchSize,
             shuffle=shuffle,
             num_workers=int(self.opt.nThreads))
-            
+
         if opt.base_font:
-            #Read and apply transformation on the BASE font 
+            #Read and apply transformation on the BASE font
             dataset_base = ImageFolder(root=opt.base_root,
                                   transform=transform, return_paths=True, font_trans=True, rgb=opt.rgb,
-                                   fineSize=opt.fineSize, loadSize=opt.loadSize) 
+                                   fineSize=opt.fineSize, loadSize=opt.loadSize)
             data_loader_base = torch.utils.data.DataLoader(
                 dataset_base,
                 batch_size=1,
@@ -416,7 +419,7 @@ class PartialDataLoader(BaseDataLoader):
 
 class DataLoader(BaseDataLoader):
     def initialize(self, opt):
-        
+
         BaseDataLoader.initialize(self, opt)
         self.fineSize = opt.fineSize
         transform = transforms.Compose([
@@ -428,14 +431,14 @@ class DataLoader(BaseDataLoader):
         # Dataset A
         dataset = ImageFolder(root=opt.dataroot + '/' + opt.phase,
                               transform=transform, return_paths=True, font_trans=(not opt.flat), rgb=opt.rgb,
-                               fineSize=opt.fineSize, loadSize=opt.loadSize) 
+                               fineSize=opt.fineSize, loadSize=opt.loadSize)
         data_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=self.opt.batchSize,
             shuffle=not self.opt.serial_batches,
             num_workers=int(self.opt.nThreads))
-            
-       
+
+
         self.dataset = dataset
         dict_inds = {}
         test_dict = opt.dataroot+'/test_dict/dict.pkl'
