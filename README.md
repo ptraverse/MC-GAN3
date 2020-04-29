@@ -33,8 +33,8 @@ pip install scikit-image
 ```bash
 mkdir FontTransfer
 cd FontTransfer
-git clone https://github.com/azadis/MC-GAN
-cd MC-GAN
+git clone https://github.com/ptraverse/MC-GAN3
+cd MC-GAN3
 ```
 
 ### MC-GAN train/test
