@@ -1,3 +1,7 @@
+Unsuccessful implementation (so far) of paper below + upgrade to python3 + training for free in google colab in 2020:
+
+----
+
 # MC-GAN in PyTorch
 
 <img src="https://people.eecs.berkeley.edu/~sazadi/MCGAN/datasets/ft51_1_fake_B.gif" width="90%"/>
